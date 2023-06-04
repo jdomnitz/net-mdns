@@ -143,7 +143,7 @@ mdns.Start();
 
 ## Related projects
 
-- [net-dns](https://github.com/richardschneider/net-dns) - DNS data model and Name Server with serializer for the wire and master file format
+- [net-dns](https://github.com/jdomnitz/net-dns) - DNS data model and Name Server with serializer for the wire and master file format
 - [net-udns](https://github.com/richardschneider/net-udns) - client for unicast DNS, DNS over HTTPS (DOH) and DNS over TLS (DOT)
 
 ## License
