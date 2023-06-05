@@ -19,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" PrivateAssets="all" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.3" PrivateAssets="all" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.0.3" PrivateAssets="all" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.0.4" PrivateAssets="all" />
     <PackageReference Include="coverlet.msbuild" Version="6.0.0" PrivateAssets="all" />
   </ItemGroup>
 
