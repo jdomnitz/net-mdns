@@ -275,7 +275,7 @@ namespace Makaretu.Dns
 
         private void FindNetworkInterfaces()
         {
-            log.Debug("Finding network interfaces");
+            Console.WriteLine("Finding network interfaces");
 
             try
             {
@@ -290,7 +290,7 @@ namespace Makaretu.Dns
 
                     if (log.IsDebugEnabled)
                     {
-                        log.Debug($"Removed nic '{nic.Name}'.");
+                        Console.WriteLine($"Removed nic '{nic.Name}'.");
                     }
                 }
 
@@ -300,7 +300,7 @@ namespace Makaretu.Dns
 
                     if (log.IsDebugEnabled)
                     {
-                        log.Debug($"Found nic '{nic.Name}'.");
+                        Console.WriteLine($"Found nic '{nic.Name}'.");
                     }
                 }
 
