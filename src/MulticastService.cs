@@ -261,7 +261,7 @@ namespace Makaretu.Dns
             AnswerReceived = null;
             NetworkInterfaceDiscovered = null;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
             }
@@ -330,7 +330,7 @@ namespace Makaretu.Dns
                 // so no event). Rebinding fixes this.
                 //
                 // Do magic only on Windows.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
                     NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
