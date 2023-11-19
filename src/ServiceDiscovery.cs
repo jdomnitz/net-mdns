@@ -391,7 +391,8 @@ namespace Makaretu.Dns
                     var args = new ServiceInstanceShutdownEventArgs
                     {
                         ServiceInstanceName = ptr.DomainName,
-                        Message = msg
+                        Message = msg,
+                        RemoteEndPoint = e.RemoteEndPoint
                     };
                     ServiceInstanceShutdown?.Invoke(this, args);
                 }
@@ -400,7 +401,8 @@ namespace Makaretu.Dns
                     var args = new ServiceInstanceDiscoveryEventArgs
                     {
                         ServiceInstanceName = ptr.DomainName,
-                        Message = msg
+                        Message = msg,
+                        RemoteEndPoint = e.RemoteEndPoint
                     };
                     ServiceInstanceDiscovered?.Invoke(this, args);
                 }
