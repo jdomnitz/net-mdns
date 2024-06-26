@@ -363,7 +363,7 @@ namespace Makaretu.Dns
             var msg = e.Message;
             if (log.IsDebugEnabled)
             {
-                log.Debug($"Answer from {e.RemoteEndPoint}");
+                Console.WriteLine($"Answer from {e.RemoteEndPoint}");
             }
             if (log.IsTraceEnabled)
             {
@@ -415,7 +415,7 @@ namespace Makaretu.Dns
 
             if (log.IsDebugEnabled)
             {
-                log.Debug($"Query from {e.RemoteEndPoint}");
+                Console.WriteLine($"Query from {e.RemoteEndPoint}");
             }
             if (log.IsTraceEnabled)
             {
@@ -443,13 +443,11 @@ namespace Makaretu.Dns
 
             // Many bonjour browsers don't like DNS-SD response
             // with additional records.
-            if (response.Answers.Any(a => a.Name == ServiceName))
-            {
+            if (response.Answers.Any(a => a.Name == ServiceName)) {
                 response.AdditionalRecords.Clear();
             }
 
-            if (AnswersContainsAdditionalRecords)
-            {
+            if (AnswersContainsAdditionalRecords) {
                 response.Answers.AddRange(response.AdditionalRecords);
                 response.AdditionalRecords.Clear();
             }
@@ -471,7 +469,7 @@ namespace Makaretu.Dns
 
             if (log.IsDebugEnabled)
             {
-                log.Debug($"Sending answer");
+                Console.WriteLine($"Sending answer");
             }
             if (log.IsTraceEnabled)
             {
