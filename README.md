@@ -14,7 +14,7 @@ service or service instance.
 
 ## Features
 
-- Targets .NET Standard 6.0
+- Targets .NET Standard 6.0, 8.0
 - Supports IPv6 and IPv4 platforms
 - Detects new and/or removed network interfaces
 - Supports multicasting on multiple network interfaces

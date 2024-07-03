@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFrameworks>net6.0</TargetFrameworks>
+	<TargetFrameworks>net6.0; net8.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>Makaretu.Dns.Multicast.New</AssemblyName>
     <RootNamespace>Makaretu.Dns</RootNamespace>
@@ -9,8 +9,8 @@
     <DebugType>full</DebugType>
     <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
     
-    <AssemblyVersion>0.31</AssemblyVersion>
-    <Version>0.31</Version>
+    <AssemblyVersion>0.32</AssemblyVersion>
+    <Version>0.32</Version>
     
     <!-- Nuget specs -->
     <PackageId>Makaretu.Dns.Multicast.New</PackageId>
@@ -30,7 +30,7 @@
   <ItemGroup>
     <PackageReference Include="Common.Logging" Version="3.4.1" />
     <PackageReference Include="Makaretu.Dns.New" Version="3.0.1" />
-	<None Include="..\README.md" Pack="true" PackagePath="\"/>
+	<None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
