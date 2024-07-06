@@ -17,7 +17,6 @@ namespace Makaretu.Dns
         private static readonly ILog log = LogManager.GetLogger(typeof(ServiceDiscovery));
         private static readonly DomainName LocalDomain = new DomainName("local");
         private static readonly DomainName SubName = new DomainName("_sub");
-        private static readonly ushort transaction = (ushort)new Random().Next(10000, int.MaxValue);
 
         /// <summary>
         ///   The service discovery service name.
@@ -27,9 +26,8 @@ namespace Makaretu.Dns
         /// </value>
         public static readonly DomainName ServiceName = new DomainName("_services._dns-sd._udp.local");
 
-        private readonly bool ownsMdns;
+        private readonly bool instantiatedMdns;
         private readonly List<ServiceProfile> profiles = new List<ServiceProfile>();
-        private bool conflict;
 
         /// <summary>
         ///   Creates a new instance of the <see cref="ServiceDiscovery"/> class.
@@ -37,7 +35,7 @@ namespace Makaretu.Dns
         public ServiceDiscovery()
             : this(new MulticastService())
         {
-            ownsMdns = true;
+            instantiatedMdns = true;
 
             // Auto start.
             Mdns.Start();
@@ -266,30 +264,31 @@ namespace Makaretu.Dns
         /// <returns>True if this service conflicts with an existing network service</returns>
         public bool Probe(ServiceProfile profile)
         {
-            conflict = false;
-            Message msg = new Message
+            bool conflict = false;
+            EventHandler<MessageEventArgs> handler = (s, e) =>
             {
-                Opcode = MessageOperation.Query,
-                QR = false,
-                Id = transaction
+                if (e.Message.Answers.Count > 0)
+                {
+                    if (e.Message.Answers[0].Class == DnsClass.IN && e.Message.Answers[0].Name.Equals(profile.HostName))
+                        conflict = true;
+                }
             };
-            msg.Questions.Add(new Question
-            {
-                Name = profile.HostName,
-                Class = DnsClass.IN,
-                Type = DnsType.ANY
-            });
+            Mdns.AnswerReceived += handler;
 
             Task.Delay(new Random().Next(0, 250)).Wait();
-            Mdns.SendQuery(msg);
-
+            Mdns.SendUnicastQuery(profile.HostName);
             Task.Delay(250).Wait();
-            Mdns.SendQuery(msg);
-
-            Task.Delay(250).Wait();
-            Mdns.SendQuery(msg);
-
-            Task.Delay(250).Wait();
+            if (!conflict)
+            {
+                Mdns.SendUnicastQuery(profile.HostName);
+                Task.Delay(250).Wait();
+                if (!conflict)
+                {
+                    Mdns.SendUnicastQuery(profile.HostName);
+                    Task.Delay(250).Wait();
+                }
+            }
+            Mdns.AnswerReceived -= handler;
             return conflict;
         }
 
@@ -371,12 +370,6 @@ namespace Makaretu.Dns
             }
 
             // Any DNS-SD answers?
-            if (msg.Id == transaction)
-            {
-                if (msg.Answers.Count > 0)
-                    conflict = true;
-            }
-
             var sd = msg.Answers
                 .OfType<PTRRecord>()
                 .Where(ptr => ptr.Name.IsSubdomainOf(LocalDomain));
@@ -461,8 +454,7 @@ namespace Makaretu.Dns
 
             if (QU)
             {
-                // TODO: Send a Unicast response if required.
-                Mdns.SendAnswer(response, e);
+                Mdns.SendAnswer(response, e, true, e.RemoteEndPoint); //Send a unicast response
             }
             else
             {
@@ -491,7 +483,7 @@ namespace Makaretu.Dns
                 {
                     Mdns.QueryReceived -= OnQuery;
                     Mdns.AnswerReceived -= OnAnswer;
-                    if (ownsMdns)
+                    if (instantiatedMdns)
                     {
                         Mdns.Dispose();
                     }

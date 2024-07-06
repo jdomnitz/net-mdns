@@ -56,6 +56,35 @@ namespace Makaretu.Dns
         }
 
         [TestMethod]
+        public void Probe_Service()
+        {
+            var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
+            var done = new ManualResetEvent(false);
+
+            MulticastService.IncludeLoopbackInterfaces = true;
+            var mdns = new MulticastService();
+            using var sd = new ServiceDiscovery(mdns);
+            {
+                mdns.NetworkInterfaceDiscovered += (s, e) =>
+                {
+                    if (sd.Probe(service))
+                        done.Set();
+                };
+                try
+                {
+                    sd.Advertise(service);
+                    mdns.Start();
+                    Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(3)), "Probe timeout");
+                }
+                finally
+                {
+                    mdns.Stop();
+                    MulticastService.IncludeLoopbackInterfaces = false;
+                }
+            }
+        }
+
+        [TestMethod]
         public void Advertises_ServiceInstances()
         {
             var service = new ServiceProfile("x", "_sdtest-1._udp", 1024, new[] { IPAddress.Loopback });

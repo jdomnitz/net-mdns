@@ -150,6 +150,7 @@ namespace Makaretu.Dns
             });
             var packet = query.ToByteArray();
             var client = new UdpClient();
+            MulticastService.IncludeLoopbackInterfaces = true;
             using (var mdns = new MulticastService())
             {
                 mdns.NetworkInterfaceDiscovered += (s, e) => ready.Set();
@@ -169,9 +170,11 @@ namespace Makaretu.Dns
                 };
                 mdns.Start();
                 Assert.IsTrue(ready.WaitOne(TimeSpan.FromSeconds(1)), "ready timeout");
+                MulticastService.IncludeLoopbackInterfaces = false;
                 await client.SendAsync(packet, packet.Length, "224.0.0.251", 5353);
 
-                var r = await client.ReceiveAsync();
+                CancellationTokenSource cts = new CancellationTokenSource(5000);
+                var r = await client.ReceiveAsync(cts.Token);
                 var response = new Message();
                 response.Read(r.Buffer, 0, r.Buffer.Length);
                 Assert.IsTrue(response.IsResponse);

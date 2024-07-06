@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 
 namespace Makaretu.Dns
@@ -189,6 +190,9 @@ namespace Makaretu.Dns
         ///   <paramref name="checkDuplicate"/> should always be <b>true</b> except
         ///   when <see href="https://tools.ietf.org/html/rfc6762#section-8.1">answering a probe</see>.
         ///   </para>
+        ///   <param name="unicastEndpoint">
+        ///     If defined, will generate a unicast response to the provided endpoint
+        ///   </param>
         ///   <note type="caution">
         ///   If possible the <see cref="SendAnswer(Message, MessageEventArgs, bool)"/>
         ///   method should be used, so that legacy unicast queries are supported.
@@ -196,7 +200,7 @@ namespace Makaretu.Dns
         /// </remarks>
         /// <see cref="QueryReceived"/>
         /// <seealso cref="Message.CreateResponse"/>
-        public void SendAnswer(Message answer, bool checkDuplicate = true);
+        public void SendAnswer(Message answer, bool checkDuplicate = true, IPEndPoint unicastEndpoint = null);
 
         /// <summary>
         ///   Send an answer to a query.
@@ -210,6 +214,9 @@ namespace Makaretu.Dns
         /// <param name="checkDuplicate">
         ///   If <b>true</b>, then if the same <paramref name="answer"/> was
         ///   recently sent it will not be sent again.
+        /// </param>
+        /// <param name="endPoint">
+        ///     The endpoint to send data (unicast) or null (multicast)
         /// </param>
         /// <exception cref="InvalidOperationException">
         ///   When the service has not started.
@@ -238,7 +245,7 @@ namespace Makaretu.Dns
         ///   when <see href="https://tools.ietf.org/html/rfc6762#section-8.1">answering a probe</see>.
         ///   </para>
         /// </remarks>
-        public void SendAnswer(Message answer, MessageEventArgs query, bool checkDuplicate = true);
+        public void SendAnswer(Message answer, MessageEventArgs query, bool checkDuplicate = true, IPEndPoint endPoint = null);
 
         /// <summary>
         ///   Called by the MulticastClient when a DNS message is received.
