@@ -236,18 +236,22 @@ namespace Makaretu.Dns
 
         [TestMethod]
         [TestCategory("IPv6")]
-        [Ignore("NotSupportedOnGithub")]
+        //[Ignore("NotSupportedOnGithub")]
         public void ReceiveAnswer_IPv6()
         {
             var service = Guid.NewGuid().ToString() + ".local";
             var done = new ManualResetEvent(false);
             Message response = null;
-
+            MulticastService.IncludeLoopbackInterfaces = true;
             using (var mdns = new MulticastService())
             {
                 mdns.UseIpv4 = false;
                 mdns.UseIpv6 = true;
-                mdns.NetworkInterfaceDiscovered += (s, e) => mdns.SendQuery(service);
+                mdns.NetworkInterfaceDiscovered += (s, e) =>
+                {
+                    mdns.SendQuery(service);
+                    MulticastService.IncludeLoopbackInterfaces = false;
+                };
                 mdns.QueryReceived += (s, e) =>
                 {
                     var msg = e.Message;
