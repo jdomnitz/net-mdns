@@ -36,6 +36,16 @@ namespace Makaretu.Dns
         private int maxPacketSize;
 
         /// <summary>
+        /// When this bit is set in a question, it indicates that the querier is willing to accept unicast replies in response to this specific query,
+        /// as well as the usual multicast responses.
+        /// </summary>
+        public const int UNICAST_RESPONSE_BIT = 0x8000;
+        /// <summary>
+        /// If the record is one that has been verified unique, the host sets the most significant bit of the rrclass field of the resource record.
+        /// This bit, the cache-flush bit, tells neighboring hosts that this is not a shared record type.
+        /// </summary>
+        public const int CACHE_FLUSH_BIT = 0x8000;
+        /// <summary>
         ///   Recently sent messages.
         /// </summary>
         private readonly RecentMessages sentMessages = new RecentMessages();
@@ -435,7 +445,7 @@ namespace Makaretu.Dns
             msg.Questions.Add(new Question
             {
                 Name = name,
-                Class = (DnsClass)((ushort)@class | 0x8000),
+                Class = (DnsClass)((ushort)@class | UNICAST_RESPONSE_BIT),
                 Type = type
             });
 

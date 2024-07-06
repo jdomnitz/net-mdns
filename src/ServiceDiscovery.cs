@@ -269,7 +269,7 @@ namespace Makaretu.Dns
             {
                 if (e.Message.Answers.Count > 0)
                 {
-                    if (e.Message.Answers[0].Class == DnsClass.IN && e.Message.Answers[0].Name.Equals(profile.HostName))
+                    if ((DnsClass)((ushort)e.Message.Answers[0].Class & ~MulticastService.CACHE_FLUSH_BIT) == DnsClass.IN && e.Message.Answers[0].Name.Equals(profile.HostName))
                         conflict = true;
                 }
             };
@@ -313,11 +313,13 @@ namespace Makaretu.Dns
 
             // Add the shared records.
             var ptrRecord = new PTRRecord { Name = profile.QualifiedServiceName, DomainName = profile.FullyQualifiedName };
+            ptrRecord.Class = (DnsClass)((ushort)ptrRecord.Class | MulticastService.CACHE_FLUSH_BIT);
             message.Answers.Add(ptrRecord);
 
             // Add the resource records.
             profile.Resources.ForEach((resource) =>
             {
+                resource.Class = (DnsClass)((ushort)ptrRecord.Class | MulticastService.CACHE_FLUSH_BIT);
                 message.Answers.Add(resource);
             });
 
@@ -420,10 +422,10 @@ namespace Makaretu.Dns
             var QU = false; // unicast query response?
             foreach (var r in request.Questions)
             {
-                if (((ushort)r.Class & 0x8000) != 0)
+                if (((ushort)r.Class & MulticastService.UNICAST_RESPONSE_BIT) != 0)
                 {
                     QU = true;
-                    r.Class = (DnsClass)((ushort)r.Class & 0x7fff);
+                    r.Class = (DnsClass)((ushort)r.Class & ~MulticastService.UNICAST_RESPONSE_BIT);
                 }
             }
 
