@@ -12,7 +12,8 @@ profile.Subtypes.Add("apiv2");
 profile.AddProperty("someprop", "somevalue");
 
 var sd = new ServiceDiscovery();
-sd.Advertise(profile);
+if (sd.Probe)
+    sd.Advertise(profile);
 ```
 
 ### Resource records

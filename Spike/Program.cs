@@ -51,15 +51,32 @@ namespace Spike
                 }
             };
 
-            var sd = new ServiceDiscovery(mdns);
-            sd.Advertise(new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 5010));
-            sd.Advertise(new ServiceProfile("x1", "_xservice._tcp", 5011));
-            sd.Advertise(new ServiceProfile("x2", "_xservice._tcp", 666));
+            var ipfs1 = new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 5010);
             var z1 = new ServiceProfile("z1", "_zservice._udp", 5012);
-            z1.AddProperty("foo", "bar");
-            sd.Advertise(z1);
+            var x1 = new ServiceProfile("x1", "_xservice._tcp", 5011);
 
+            var sd = new ServiceDiscovery(mdns);
             mdns.Start();
+
+            if (!sd.Probe(ipfs1))
+            {
+                sd.Advertise(ipfs1);
+                sd.Announce(ipfs1);
+            }
+
+            if (!sd.Probe(x1))
+            {
+                sd.Advertise(x1);
+                sd.Announce(x1);
+            }
+
+            z1.AddProperty("foo", "bar");
+            if (!sd.Probe(z1))
+            {
+                sd.Advertise(z1);
+                sd.Announce(z1);
+            }
+
             Console.ReadKey();
         }
     }

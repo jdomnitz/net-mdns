@@ -46,7 +46,12 @@ var sd = new ServiceDiscovery();
 if (sd.Probe(service))
     // Handle the service conflict
 else
+{
+    //Begin responding to queries for this service
     sd.Advertise(service);
+    //Notify listeners that the service is now available
+    sd.Announce(service);
+}
 ```
 
 See the [example advertiser](Spike/Program.cs) for a working program.
