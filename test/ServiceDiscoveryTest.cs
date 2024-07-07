@@ -61,7 +61,6 @@ namespace Makaretu.Dns
             var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
             var done = new ManualResetEvent(false);
 
-            MulticastService.IncludeLoopbackInterfaces = true;
             var mdns = new MulticastService();
             using var sd = new ServiceDiscovery(mdns);
             {
@@ -79,9 +78,61 @@ namespace Makaretu.Dns
                 finally
                 {
                     mdns.Stop();
-                    MulticastService.IncludeLoopbackInterfaces = false;
                 }
             }
+        }
+
+        [TestMethod]
+        public void Probe_Service2()
+        {
+            var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
+
+            var sd = new ServiceDiscovery();
+            sd.Advertise(service);
+            sd.Mdns.Start();
+
+
+            var mdns = new MulticastService();
+            using var sd2 = new ServiceDiscovery(mdns);
+            {
+                mdns.NetworkInterfaceDiscovered += (s, e) =>
+                {
+                    Assert.IsTrue(sd2.Probe(service));
+                };
+                try
+                {
+                    mdns.Start();
+                }
+                finally
+                {
+                    mdns.Stop();
+                }
+            }
+            sd.Dispose();
+        }
+
+        [TestMethod]
+        public void Probe_Service3()
+        {
+            var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
+
+            var mdns = new MulticastService();
+            using var sd = new ServiceDiscovery(mdns);
+            {
+                mdns.NetworkInterfaceDiscovered += (s, e) =>
+                {
+                    Assert.IsFalse(sd.Probe(service));
+                };
+                try
+                {
+                    mdns.Start();
+                }
+                finally
+                {
+                    mdns.Stop();
+                }
+            }
+            sd.Dispose();
         }
 
         [TestMethod]
