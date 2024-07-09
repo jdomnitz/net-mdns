@@ -111,7 +111,7 @@ namespace Makaretu.Dns
                 }
                 catch (Exception e)
                 {
-                    log.Error($"Cannot setup send socket for {address}: {e.Message}");
+                    log.Error($"Cannot setup send socket for {address}: {e.Message}", e);
                     sender.Dispose();
                 }
             }
