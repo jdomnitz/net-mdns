@@ -562,6 +562,9 @@ namespace Makaretu.Dns
             mdns.AnswerReceived += (s, e) =>
             {
                 var msg = e.Message;
+                //Remove Cache-Flush bit
+                foreach (var answer in e.Message.Answers)
+                    answer.Class = (DnsClass)((ushort)answer.Class & ~MulticastService.CACHE_FLUSH_BIT);
                 foreach (var r in service.Resources)
                 {
                     if (!msg.Answers.Contains(r))
