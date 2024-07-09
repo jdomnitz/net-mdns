@@ -194,7 +194,7 @@ namespace Makaretu.Dns
         ///     If defined, will generate a unicast response to the provided endpoint
         ///   </param>
         ///   <note type="caution">
-        ///   If possible the <see cref="SendAnswer(Message, MessageEventArgs, bool)"/>
+        ///   If possible the <see cref="SendAnswer(Message, MessageEventArgs, bool, IPEndPoint)"/>
         ///   method should be used, so that legacy unicast queries are supported.
         ///   </note>
         /// </remarks>
@@ -227,7 +227,7 @@ namespace Makaretu.Dns
         /// <remarks>
         ///   <para>
         ///   If the <paramref name="query"/> is a standard multicast query (sent to port 5353), then
-        ///   <see cref="SendAnswer(Message, bool)"/> is called.
+        ///   <see cref="SendAnswer(Message, bool, IPEndPoint)"/> is called.
         ///   </para>
         ///   <para>
         ///   Otherwise a legacy unicast response is sent to sender's end point.

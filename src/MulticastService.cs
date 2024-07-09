@@ -282,12 +282,17 @@ namespace Makaretu.Dns
             QueryReceived = null;
             AnswerReceived = null;
             NetworkInterfaceDiscovered = null;
-
+#if NETSTANDARD1_1_OR_GREATER || NETCOREAPP1_0_OR_GREATER || NET471_OR_GREATER
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
             }
-
+#else
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+            }
+#endif
             // Stop current UDP listener
             client?.Dispose();
             client = null;
@@ -329,7 +334,7 @@ namespace Makaretu.Dns
                 knownNics = currentNics;
 
                 // Only create client if something has change.
-                if (newNics.Any() || oldNics.Any())
+                if (newNics.Count > 0 || oldNics.Count > 0)
                 {
                     client?.Dispose();
                     client = new MulticastClient(UseIpv4, UseIpv6, networkInterfacesFilter?.Invoke(knownNics) ?? knownNics);
@@ -337,7 +342,7 @@ namespace Makaretu.Dns
                 }
 
                 // Tell others.
-                if (newNics.Any())
+                if (newNics.Count > 0)
                 {
                     NetworkInterfaceDiscovered?.Invoke(this, new NetworkInterfaceEventArgs
                     {
@@ -352,11 +357,19 @@ namespace Makaretu.Dns
                 // so no event). Rebinding fixes this.
                 //
                 // Do magic only on Windows.
+#if NETSTANDARD1_1_OR_GREATER || NETCOREAPP1_0_OR_GREATER || NET471_OR_GREATER
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
                     NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
                 }
+#else
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                {
+                    NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+                    NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
+                }
+#endif
             }
             catch (Exception e)
             {
@@ -518,7 +531,7 @@ namespace Makaretu.Dns
         ///   when <see href="https://tools.ietf.org/html/rfc6762#section-8.1">answering a probe</see>.
         ///   </para>
         ///   <note type="caution">
-        ///   If possible the <see cref="SendAnswer(Message, MessageEventArgs, bool)"/>
+        ///   If possible the <see cref="SendAnswer(Message, MessageEventArgs, bool, IPEndPoint)"/>
         ///   method should be used, so that legacy unicast queries are supported.
         ///   </note>
         /// </remarks>
@@ -564,7 +577,7 @@ namespace Makaretu.Dns
         /// <remarks>
         ///   <para>
         ///   If the <paramref name="query"/> is a standard multicast query (sent to port 5353), then
-        ///   <see cref="SendAnswer(Message, bool)"/> is called.
+        ///   <see cref="SendAnswer(Message, bool, IPEndPoint)"/> is called.
         ///   </para>
         ///   <para>
         ///   Otherwise a legacy unicast response is sent to sender's end point.
@@ -635,8 +648,7 @@ namespace Makaretu.Dns
             {
                 var unicastClient = (remoteEndPoint.Address.AddressFamily == AddressFamily.InterNetwork)
                     ? unicastClientIp4 : unicastClientIp6;
-                if (unicastClient != null) //If the OS doesn't support the address family we can't send
-                    unicastClient.SendAsync(packet, packet.Length, remoteEndPoint).GetAwaiter().GetResult();
+                unicastClient?.SendAsync(packet, packet.Length, remoteEndPoint).GetAwaiter().GetResult();
             }
         }
 

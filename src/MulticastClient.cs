@@ -66,7 +66,7 @@ namespace Makaretu.Dns
                     || (useIpv6 && a.AddressFamily == AddressFamily.InterNetworkV6));
             foreach (var address in addreses)
             {
-                if (senders.Keys.Contains(address))
+                if (senders.ContainsKey(address))
                 {
                     continue;
                 }
