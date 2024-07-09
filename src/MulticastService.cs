@@ -213,7 +213,7 @@ namespace Makaretu.Dns
         public static IEnumerable<NetworkInterface> GetNetworkInterfaces()
         {
             var nics = NetworkInterface.GetAllNetworkInterfaces()
-                .Where(nic => nic.OperationalStatus == OperationalStatus.Up)
+                .Where(nic => nic.OperationalStatus == OperationalStatus.Up && !nic.IsReceiveOnly && nic.SupportsMulticast)
                 .Where(nic => IncludeLoopbackInterfaces || (nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
                 .ToArray();
             if (nics.Length > 0)
@@ -221,7 +221,7 @@ namespace Makaretu.Dns
 
             // Special case: no operational NIC, then use loopbacks.
             return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(nic => nic.OperationalStatus == OperationalStatus.Up);
+                .Where(nic => nic.OperationalStatus == OperationalStatus.Up && !nic.IsReceiveOnly && nic.SupportsMulticast);
         }
 
         /// <summary>

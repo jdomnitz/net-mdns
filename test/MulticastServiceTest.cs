@@ -250,6 +250,8 @@ namespace Makaretu.Dns
             MulticastService.IncludeLoopbackInterfaces = true;
             using (var mdns = new MulticastService())
             {
+                if (!MulticastService.GetNetworkInterfaces().Any())
+                    Assert.Inconclusive("No interfaces available");
                 mdns.UseIpv4 = false;
                 mdns.UseIpv6 = true;
                 mdns.NetworkInterfaceDiscovered += (s, e) =>
