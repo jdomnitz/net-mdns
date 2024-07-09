@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0; net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0; net8.0; net481</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
     <DebugType>portable</DebugType>
     <RootNamespace>Makaretu.Mdns</RootNamespace>
+	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>

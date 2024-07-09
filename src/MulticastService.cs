@@ -63,12 +63,12 @@ namespace Makaretu.Dns
         /// <summary>
         ///   Use to send unicast IPv4 answers.
         /// </summary>
-        private readonly UdpClient? unicastClientIp4;
+        private readonly UdpClient unicastClientIp4;
 
         /// <summary>
         ///   Use to send unicast IPv6 answers.
         /// </summary>
-        private readonly UdpClient? unicastClientIp6;
+        private readonly UdpClient unicastClientIp6;
 
         /// <summary>
         ///   Function used for listening filtered network interfaces.

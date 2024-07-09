@@ -173,8 +173,12 @@ namespace Makaretu.Dns
                 MulticastService.IncludeLoopbackInterfaces = false;
                 await client.SendAsync(packet, packet.Length, "224.0.0.251", 5353);
 
+#if NET6_0_OR_GREATER
                 CancellationTokenSource cts = new CancellationTokenSource(5000);
                 var r = await client.ReceiveAsync(cts.Token);
+#else
+                var r = await client.ReceiveAsync();
+#endif
                 var response = new Message();
                 response.Read(r.Buffer, 0, r.Buffer.Length);
                 Assert.IsTrue(response.IsResponse);
