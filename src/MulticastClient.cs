@@ -83,7 +83,6 @@ namespace Makaretu.Dns
                             sender.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                             sender.Client.Bind(localEndpoint);
                             sender.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, mcastOption4);
-                            sender.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastLoopback, true);
                             break;
                         case AddressFamily.InterNetworkV6:
                             IPv6MulticastOption mcastOption6 = new IPv6MulticastOption(MulticastAddressIp6, address.ScopeId);
@@ -91,7 +90,6 @@ namespace Makaretu.Dns
                             sender.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                             sender.Client.Bind(localEndpoint);
                             sender.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.AddMembership, mcastOption6);
-                            sender.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.MulticastLoopback, true);
                             break;
                         default:
                             throw new NotSupportedException($"Address family {address.AddressFamily}.");
