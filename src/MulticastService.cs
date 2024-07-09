@@ -182,6 +182,14 @@ namespace Makaretu.Dns
         public static bool IncludeLoopbackInterfaces { get; set; } = false;
 
         /// <summary>
+        /// Allow answering queries in unicast. When multiple services are sharing a port this should be set to false, otherwise true.
+        /// </summary>
+        /// <b>true</b> to respond to unicast queries with unicast responses.
+        /// <b>false</b> to always answer queries with unicast.
+        /// Defaults to <b>true</b>.
+        public static bool EnableUnicastAnswers { get; set; } = true;
+
+        /// <summary>
         ///   Get the network interfaces that are useable.
         /// </summary>
         /// <returns>

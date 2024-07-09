@@ -267,10 +267,13 @@ namespace Makaretu.Dns
             bool conflict = false;
             EventHandler<MessageEventArgs> handler = (s, e) =>
             {
-                if (e.Message.Answers.Count > 0)
+                foreach (ResourceRecord answer in e.Message.Answers)
                 {
-                    if ((DnsClass)((ushort)e.Message.Answers[0].Class & ~MulticastService.CACHE_FLUSH_BIT) == DnsClass.IN && e.Message.Answers[0].Name.Equals(profile.HostName))
+                    if ((DnsClass)((ushort)answer.Class & ~MulticastService.CACHE_FLUSH_BIT) == DnsClass.IN && answer.Name.Equals(profile.HostName))
+                    {
                         conflict = true;
+                        return;
+                    }
                 }
             };
             Mdns.AnswerReceived += handler;
@@ -454,13 +457,13 @@ namespace Makaretu.Dns
                 ;
             }
 
-            if (QU)
+            if (QU && MulticastService.EnableUnicastAnswers)
             {
-                Mdns.SendAnswer(response, e, true, e.RemoteEndPoint); //Send a unicast response
+                Mdns.SendAnswer(response, e, false, e.RemoteEndPoint); //Send a unicast response
             }
             else
             {
-                Mdns.SendAnswer(response, e);
+                Mdns.SendAnswer(response, e, !QU);
             }
 
             if (log.IsDebugEnabled)
