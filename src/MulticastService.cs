@@ -63,12 +63,12 @@ namespace Makaretu.Dns
         /// <summary>
         ///   Use to send unicast IPv4 answers.
         /// </summary>
-        private readonly UdpClient unicastClientIp4 = new UdpClient(AddressFamily.InterNetwork);
+        private readonly UdpClient? unicastClientIp4;
 
         /// <summary>
         ///   Use to send unicast IPv6 answers.
         /// </summary>
-        private readonly UdpClient unicastClientIp6 = new UdpClient(AddressFamily.InterNetworkV6);
+        private readonly UdpClient? unicastClientIp6;
 
         /// <summary>
         ///   Function used for listening filtered network interfaces.
@@ -139,7 +139,11 @@ namespace Makaretu.Dns
             networkInterfacesFilter = filter;
 
             UseIpv4 = Socket.OSSupportsIPv4;
+            if (UseIpv4)
+                unicastClientIp4 = new UdpClient(AddressFamily.InterNetwork);
             UseIpv6 = Socket.OSSupportsIPv6;
+            if (UseIpv6)
+                unicastClientIp6 = new UdpClient(AddressFamily.InterNetworkV6);
             IgnoreDuplicateMessages = true;
         }
 
@@ -166,7 +170,7 @@ namespace Makaretu.Dns
         ///   <b>true</b> to ignore duplicate messages. Defaults to <b>true</b>.
         /// </value>
         /// <remarks>
-        ///   When set, a message that has been received within the last minute
+        ///   When set, a message that has been received within the last second
         ///   will be ignored.
         /// </remarks>
         public bool IgnoreDuplicateMessages { get; set; }
@@ -621,9 +625,9 @@ namespace Makaretu.Dns
                 return;
             }
 
-            // Standard multicast reponse?
             if (remoteEndPoint == null)
             {
+                // Standard multicast reponse
                 client?.SendAsync(packet).GetAwaiter().GetResult();
             }
             // Unicast response
@@ -631,7 +635,8 @@ namespace Makaretu.Dns
             {
                 var unicastClient = (remoteEndPoint.Address.AddressFamily == AddressFamily.InterNetwork)
                     ? unicastClientIp4 : unicastClientIp6;
-                unicastClient.SendAsync(packet, packet.Length, remoteEndPoint).GetAwaiter().GetResult();
+                if (unicastClient != null) //If the OS doesn't support the address family we can't send
+                    unicastClient.SendAsync(packet, packet.Length, remoteEndPoint).GetAwaiter().GetResult();
             }
         }
 

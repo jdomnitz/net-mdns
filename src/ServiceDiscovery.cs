@@ -322,13 +322,14 @@ namespace Makaretu.Dns
             // Add the resource records.
             profile.Resources.ForEach((resource) =>
             {
-                resource.Class = (DnsClass)((ushort)ptrRecord.Class | MulticastService.CACHE_FLUSH_BIT);
-                message.Answers.Add(resource);
+                var newResource = resource.Clone() as ResourceRecord;
+                newResource.Class = (DnsClass)((ushort)newResource.Class | MulticastService.CACHE_FLUSH_BIT);
+                message.Answers.Add(newResource);
             });
 
-            Mdns.SendAnswer(message, checkDuplicate: false);
+            Mdns.SendAnswer(message, false);
             Task.Delay(1000).Wait();
-            Mdns.SendAnswer(message, checkDuplicate: false);
+            Mdns.SendAnswer(message, false);
         }
 
         /// <summary>
