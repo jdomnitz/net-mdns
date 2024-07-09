@@ -240,9 +240,10 @@ namespace Makaretu.Dns
 
         [TestMethod]
         [TestCategory("IPv6")]
-        [Ignore("NotSupportedOnGithub")]
         public void ReceiveAnswer_IPv6()
         {
+            if (!Socket.OSSupportsIPv6)
+                Assert.Inconclusive("IPv6 is not supported on this host");
             var service = Guid.NewGuid().ToString() + ".local";
             var done = new ManualResetEvent(false);
             Message response = null;
