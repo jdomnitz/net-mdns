@@ -543,6 +543,10 @@ namespace Makaretu.Dns
             // ID of zero.
             answer.AA = true;
             answer.Id = 0;
+            answer.Opcode = MessageOperation.Query;
+            answer.RA = false;
+            answer.AD = false;
+            answer.CD = false;
 
             // All MDNS answers must not contain any questions.
             answer.Questions.Clear();
@@ -716,6 +720,7 @@ namespace Makaretu.Dns
                 return; // eat the exception
             }
 
+            //Section 18.3 An opcode other than 0 must be silently ignored
             if (msg.Opcode != MessageOperation.Query || msg.Status != MessageStatus.NoError)
             {
                 return;

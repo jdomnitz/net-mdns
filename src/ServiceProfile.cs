@@ -37,13 +37,18 @@ namespace Makaretu.Dns
         ///   The IP addresses of the specific service instance. If <b>null</b> then
         ///   <see cref="MulticastService.GetIPAddresses"/> is used.
         /// </param>
+        /// <param name="sharedProfile">
+        ///     If set, this profile is shared between multiple mDNS responders.
+        ///     This server does not own the profile exclusively.
+        /// </param>
         /// <remarks>
         ///   The SRV, TXT and A/AAAA resoruce records are added to the <see cref="Resources"/>.
         /// </remarks>
-        public ServiceProfile(DomainName instanceName, DomainName serviceName, ushort port, IEnumerable<IPAddress> addresses = null)
+        public ServiceProfile(DomainName instanceName, DomainName serviceName, ushort port, IEnumerable<IPAddress> addresses = null, bool sharedProfile = false)
         {
             InstanceName = instanceName;
             ServiceName = serviceName;
+            SharedProfile = sharedProfile;
             var fqn = FullyQualifiedName;
 
             var simpleServiceName = new DomainName(ServiceName.ToString()
@@ -158,6 +163,12 @@ namespace Makaretu.Dns
         /// </value>
         /// <seealso href="https://tools.ietf.org/html/rfc6763#section-7.1"/>
         public List<string> Subtypes { get; set; } = new List<string>();
+
+        /// <summary>
+        /// If set, this profile is shared between multiple mDNS responders.
+        /// This server does not own the profile exclusively.
+        /// </summary>
+        public bool SharedProfile { get; set; } = false;
 
         /// <summary>
         ///   Add a property of the service to the <see cref="TXTRecord"/>.

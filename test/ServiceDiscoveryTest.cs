@@ -37,6 +37,10 @@ namespace Makaretu.Dns
             mdns.AnswerReceived += (s, e) =>
             {
                 var msg = e.Message;
+                if (msg.Answers.OfType<PTRRecord>().Any(p => p.DomainName == service.QualifiedServiceName && ((int)p.Class & MulticastService.CACHE_FLUSH_BIT) != 0))
+                {
+                    Assert.Fail("shared PTR records should not have cache-flush set");
+                }
                 if (msg.Answers.OfType<PTRRecord>().Any(p => p.DomainName == service.QualifiedServiceName))
                 {
                     done.Set();
@@ -46,6 +50,40 @@ namespace Makaretu.Dns
             {
                 using var sd = new ServiceDiscovery(mdns);
                     sd.Advertise(service);
+                mdns.Start();
+                Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(1)), "query timeout");
+            }
+            finally
+            {
+                mdns.Stop();
+            }
+        }
+
+        [TestMethod]
+        public void Advertises_SharedService()
+        {
+            var service = new ServiceProfile("x", "_sdtest-1._udp", 1024, new[] { IPAddress.Loopback }, true);
+            var done = new ManualResetEvent(false);
+            Assert.IsTrue(service.SharedProfile, "Shared Profile was not set");
+            var mdns = new MulticastService();
+            mdns.NetworkInterfaceDiscovered += (s, e) =>
+                mdns.SendQuery(service.QualifiedServiceName, DnsClass.IN, DnsType.ANY);
+            mdns.AnswerReceived += (s, e) =>
+            {
+                var msg = e.Message;
+                if (msg.Answers.OfType<PTRRecord>().Any(p => p.DomainName == service.QualifiedServiceName && ((int)p.Class & MulticastService.CACHE_FLUSH_BIT) != 0))
+                {
+                    Assert.Fail("shared PTR records should not have cache-flush set");
+                }
+                if (msg.AdditionalRecords.OfType<SRVRecord>().Any(s => (s.Name == service.FullyQualifiedName && ((int)s.Class & MulticastService.CACHE_FLUSH_BIT) == 0)))
+                {
+                    done.Set();
+                }
+            };
+            try
+            {
+                using var sd = new ServiceDiscovery(mdns);
+                sd.Advertise(service);
                 mdns.Start();
                 Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(1)), "query timeout");
             }
@@ -593,11 +631,12 @@ namespace Makaretu.Dns
         }
 
         [TestMethod]
-        public void Announce_SentTwice()
+        public void Announce_SentThrice()
         {
             var service = new ServiceProfile("z", "_sdtest-4._udp", 1024, new[] { IPAddress.Loopback });
             var done = new ManualResetEvent(false);
             var nanswers = 0;
+            DateTime start = DateTime.Now;
             var mdns = new MulticastService
             {
                 IgnoreDuplicateMessages = false
@@ -607,7 +646,7 @@ namespace Makaretu.Dns
                 var msg = e.Message;
                 if (msg.Answers.OfType<PTRRecord>().Any(p => p.DomainName == service.FullyQualifiedName))
                 {
-                    if (++nanswers == 2)
+                    if (++nanswers == 3)
                     {
                         done.Set();
                     }
@@ -619,10 +658,13 @@ namespace Makaretu.Dns
                     mdns.NetworkInterfaceDiscovered += (s, e) =>
                     {
                         Assert.IsFalse(sd.Probe(service));
-                        sd.Announce(service);
+                        start = DateTime.Now;
+                        sd.Announce(service, 3);
                     };
                 mdns.Start();
                 Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(4)), "announce timeout");
+                if ((DateTime.Now - start).TotalMilliseconds < 3000)
+                    Assert.Fail("Announcing too fast");
             }
             finally
             {

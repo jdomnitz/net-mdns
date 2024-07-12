@@ -171,6 +171,9 @@ namespace Makaretu.Dns
         /// <param name="profile">
         ///   The profile to describe.
         /// </param>
+        /// <param name="numberOfTimes">
+        ///     How many times to announce this service profile. Range [2 - 8]
+        /// </param>
         /// <remarks>
         ///   Sends a MDNS response <see cref="Message"/> containing the pointer
         ///   and resource records of the <paramref name="profile"/>.
@@ -179,7 +182,7 @@ namespace Makaretu.Dns
         ///   two unsolicited responses are sent one second apart.
         ///   </para>
         /// </remarks>
-        public void Announce(ServiceProfile profile);
+        public void Announce(ServiceProfile profile, int numberOfTimes = 2);
 
         /// <summary>
         /// Sends a goodbye message for the provided

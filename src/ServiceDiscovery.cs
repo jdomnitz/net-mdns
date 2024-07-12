@@ -302,6 +302,9 @@ namespace Makaretu.Dns
         /// <param name="profile">
         ///   The profile to describe.
         /// </param>
+        /// <param name="numberOfTimes">
+        ///     How many times to announce this service profile. Range [2 - 8]
+        /// </param>
         /// <remarks>
         ///   Sends a MDNS response <see cref="Message"/> containing the pointer
         ///   and resource records of the <paramref name="profile"/>.
@@ -310,26 +313,31 @@ namespace Makaretu.Dns
         ///   two unsolicited responses are sent one second apart.
         ///   </para>
         /// </remarks>
-        public void Announce(ServiceProfile profile)
+        public void Announce(ServiceProfile profile, int numberOfTimes = 2)
         {
+            numberOfTimes = Math.Max(Math.Min(numberOfTimes, 8), 2);
             var message = new Message { QR = true };
 
             // Add the shared records.
             var ptrRecord = new PTRRecord { Name = profile.QualifiedServiceName, DomainName = profile.FullyQualifiedName };
-            ptrRecord.Class = (DnsClass)((ushort)ptrRecord.Class | MulticastService.CACHE_FLUSH_BIT);
+            ptrRecord.Class = (DnsClass)((ushort)ptrRecord.Class);
             message.Answers.Add(ptrRecord);
 
             // Add the resource records.
             profile.Resources.ForEach((resource) =>
             {
                 var newResource = resource.Clone() as ResourceRecord;
-                newResource.Class = (DnsClass)((ushort)newResource.Class | MulticastService.CACHE_FLUSH_BIT);
+                if (profile.SharedProfile == false)
+                    newResource.Class = (DnsClass)((ushort)newResource.Class | MulticastService.CACHE_FLUSH_BIT);
                 message.Answers.Add(newResource);
             });
 
-            Mdns.SendAnswer(message, false);
-            Task.Delay(1000).Wait();
-            Mdns.SendAnswer(message, false);
+            for (int i = 0; i < numberOfTimes; i++)
+            {
+                if (i > 0)
+                    Task.Delay(500 * (1 << i)).Wait();
+                Mdns.SendAnswer(message, false);
+            }
         }
 
         /// <summary>
