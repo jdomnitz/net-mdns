@@ -333,6 +333,15 @@ namespace Makaretu.Dns
         }
 
         /// <summary>
+        /// Sends a goodbye message for each announced service
+        /// and removes its pointer from the name sever.
+        /// </summary>
+        public void Unadvertise()
+        {
+            profiles.ForEach(profile => Unadvertise(profile));
+        }
+
+        /// <summary>
         /// Sends a goodbye message for the provided
         /// profile and removes its pointer from the name sever.
         /// </summary>
@@ -353,14 +362,6 @@ namespace Makaretu.Dns
             Mdns.SendAnswer(message);
 
             NameServer.Catalog.TryRemove(profile.QualifiedServiceName, out Node _);
-        }
-
-        /// <summary>
-        /// Sends a goodbye message for each announced service.
-        /// </summary>
-        public void Unadvertise()
-        {
-            profiles.ForEach(profile => Unadvertise(profile));
         }
 
         private void OnAnswer(object sender, MessageEventArgs e)

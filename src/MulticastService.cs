@@ -76,18 +76,6 @@ namespace Makaretu.Dns
         private readonly Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> networkInterfacesFilter;
 
         /// <summary>
-        ///   Set the default TTLs.
-        /// </summary>
-        /// <seealso cref="ResourceRecord.DefaultTTL"/>
-        /// <seealso cref="ResourceRecord.DefaultHostTTL"/>
-        static MulticastService()
-        {
-            // https://tools.ietf.org/html/rfc6762 section 10
-            ResourceRecord.DefaultTTL = TimeSpan.FromMinutes(75);
-            ResourceRecord.DefaultHostTTL = TimeSpan.FromSeconds(120);
-        }
-
-        /// <summary>
         ///   Raised when any local MDNS service sends a query.
         /// </summary>
         /// <value>
@@ -192,6 +180,17 @@ namespace Makaretu.Dns
         /// <b>false</b> to always answer queries with unicast.
         /// Defaults to <b>true</b>.
         public static bool EnableUnicastAnswers { get; set; } = true;
+
+        /// <summary>
+        /// Per https://tools.ietf.org/html/rfc6762 section 10: All records containing
+        /// Host in the record OR Rdata should have a default TTL of 2 mins
+        /// </summary>
+        public static TimeSpan HostRecordTTL = TimeSpan.FromSeconds(120);
+        /// <summary>
+        /// Per https://tools.ietf.org/html/rfc6762 section 10:
+        /// All records NOT containing Host in the record OR Rdata should have a default TTL of 75 mins
+        /// </summary>
+        public static TimeSpan NonHostTTL = TimeSpan.FromMinutes(75);
 
         /// <summary>
         ///   Get the network interfaces that are useable.
@@ -495,6 +494,7 @@ namespace Makaretu.Dns
         /// </exception>
         public void SendQuery(Message msg)
         {
+            UpdateTTL(msg, false);
             Send(msg, false);
         }
 
@@ -549,6 +549,7 @@ namespace Makaretu.Dns
 
             answer.Truncate(maxPacketSize);
 
+            UpdateTTL(answer, false);
             Send(answer, checkDuplicate, unicastEndpoint);
         }
 
@@ -609,18 +610,7 @@ namespace Makaretu.Dns
             answer.Questions.AddRange(query.Message.Questions);
             answer.Truncate(maxPacketSize);
 
-            foreach (var r in answer.Answers)
-            {
-                r.TTL = (r.TTL > maxLegacyUnicastTTL) ? maxLegacyUnicastTTL : r.TTL;
-            }
-            foreach (var r in answer.AdditionalRecords)
-            {
-                r.TTL = (r.TTL > maxLegacyUnicastTTL) ? maxLegacyUnicastTTL : r.TTL;
-            }
-            foreach (var r in answer.AdditionalRecords)
-            {
-                r.TTL = (r.TTL > maxLegacyUnicastTTL) ? maxLegacyUnicastTTL : r.TTL;
-            }
+            UpdateTTL(answer, true);
 
             Send(answer, checkDuplicate, query.RemoteEndPoint);
         }
@@ -650,6 +640,39 @@ namespace Makaretu.Dns
                     ? unicastClientIp4 : unicastClientIp6;
                 unicastClient?.SendAsync(packet, packet.Length, remoteEndPoint).GetAwaiter().GetResult();
             }
+        }
+
+        private static void UpdateTTL(Message msg, bool legacy)
+        {
+            foreach (var r in msg.Answers)
+                updateRecord(r, legacy);
+
+            foreach (var r in msg.AdditionalRecords)
+                updateRecord(r, legacy);
+
+            foreach (var r in msg.AuthorityRecords)
+                updateRecord(r, legacy);
+        }
+
+        private static void updateRecord(ResourceRecord record, bool legacy)
+        {
+            switch (record.Type)
+            {
+                case DnsType.A:
+                case DnsType.AAAA:
+                case DnsType.SRV:
+                case DnsType.HINFO:
+                case DnsType.PTR:
+                    if (record.TTL != TimeSpan.Zero)
+                        record.TTL = HostRecordTTL;
+                    break;
+                default:
+                    if (record.TTL != TimeSpan.Zero)
+                        record.TTL = NonHostTTL;
+                    break;
+            }
+            if (legacy && record.TTL > maxLegacyUnicastTTL)
+                record.TTL = maxLegacyUnicastTTL;
         }
 
         /// <summary>

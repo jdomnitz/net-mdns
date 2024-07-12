@@ -10,13 +10,6 @@ namespace Makaretu.Dns
     /// <seealso cref="ServiceDiscovery.Advertise(ServiceProfile)"/>
     public class ServiceProfile
     {
-        // Enforce multicast defaults, especially TTL.
-        static ServiceProfile()
-        {
-            // Make sure MulticastService is inited.
-            MulticastService.ReferenceEquals(null, null);
-        }
-
         /// <summary>
         ///   Creates a new instance of the <see cref="ServiceProfile"/> class.
         /// </summary>
@@ -63,17 +56,21 @@ namespace Makaretu.Dns
             {
                 Name = fqn,
                 Port = port,
-                Target = HostName
+                Target = HostName,
+                TTL = MulticastService.HostRecordTTL
             });
             Resources.Add(new TXTRecord
             {
                 Name = fqn,
-                Strings = { "txtvers=1" }
+                Strings = { "txtvers=1" },
+                TTL = MulticastService.NonHostTTL
             });
 
             foreach (var address in addresses ?? MulticastService.GetLinkLocalAddresses())
             {
-                Resources.Add(AddressRecord.Create(HostName, address));
+                AddressRecord ar = AddressRecord.Create(HostName, address);
+                ar.TTL = MulticastService.HostRecordTTL;
+                Resources.Add(ar);
             }
         }
 
