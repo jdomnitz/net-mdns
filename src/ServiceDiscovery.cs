@@ -335,7 +335,7 @@ namespace Makaretu.Dns
             for (int i = 0; i < numberOfTimes; i++)
             {
                 if (i > 0)
-                    Task.Delay(500 * (1 << i)).Wait();
+                    Task.Delay(501 * (1 << i)).Wait();
                 Mdns.SendAnswer(message, false);
             }
         }
