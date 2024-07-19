@@ -10,6 +10,9 @@ namespace Makaretu.Dns
     /// <seealso cref="ServiceDiscovery.Advertise(ServiceProfile)"/>
     public class ServiceProfile
     {
+        private DomainName hostName;
+        private DomainName serviceName;
+        private DomainName instanceName;
         /// <summary>
         ///   Creates a new instance of the <see cref="ServiceProfile"/> class.
         /// </summary>
@@ -18,6 +21,9 @@ namespace Makaretu.Dns
         /// </remarks>
         public ServiceProfile()
         {
+            instanceName = new DomainName();
+            serviceName = new DomainName();
+            hostName = new DomainName();
         }
 
         /// <summary>
@@ -46,8 +52,8 @@ namespace Makaretu.Dns
         /// </remarks>
         public ServiceProfile(DomainName instanceName, DomainName serviceName, ushort port, IEnumerable<IPAddress> addresses = null, bool sharedProfile = false)
         {
-            InstanceName = instanceName;
-            ServiceName = serviceName;
+            this.instanceName = instanceName;
+            this.serviceName = serviceName;
             SharedProfile = sharedProfile;
             var fqn = FullyQualifiedName;
 
@@ -56,7 +62,7 @@ namespace Makaretu.Dns
                 .Replace("._udp", "")
                 .Trim('_')
                 .Replace("_", "-"));
-            HostName = DomainName.Join(InstanceName, simpleServiceName, Domain);
+            this.hostName = DomainName.Join(InstanceName, simpleServiceName, Domain);
             Resources.Add(new SRVRecord
             {
                 Name = fqn,
@@ -101,7 +107,29 @@ namespace Makaretu.Dns
         ///   The second label is either "_tcp" (for application
         ///   protocols that run over TCP) or "_udp" (for all others). 
         /// </remarks>
-        public DomainName ServiceName { get; set; }
+        public DomainName ServiceName
+        { 
+            get => serviceName; 
+            set 
+            {
+                serviceName = value;
+                if (instanceName != null)
+                {
+                    var simpleServiceName = new DomainName(serviceName.ToString()
+                                                .Replace("._tcp", "")
+                                                .Replace("._udp", "")
+                                                .Trim('_')
+                                                .Replace("_", "-"));
+                    HostName = DomainName.Join(InstanceName, simpleServiceName, Domain);
+                }
+                DomainName fqn = FullyQualifiedName;
+                foreach (var srvRecord in Resources.OfType<SRVRecord>())
+                    srvRecord.Name = fqn;
+
+                foreach (var txtRecord in Resources.OfType<TXTRecord>())
+                    txtRecord.Name = fqn;
+            }
+        }
 
         /// <summary>
         ///   A unique identifier for the service instance.
@@ -109,7 +137,29 @@ namespace Makaretu.Dns
         /// <value>
         ///   Some unique value.
         /// </value>
-        public DomainName InstanceName { get; set; }
+        public DomainName InstanceName
+        {
+            get => instanceName;
+            set
+            {
+                instanceName = value;
+                if (serviceName != null)
+                {
+                    var simpleServiceName = new DomainName(serviceName.ToString()
+                                                .Replace("._tcp", "")
+                                                .Replace("._udp", "")
+                                                .Trim('_')
+                                                .Replace("_", "-"));
+                    HostName = DomainName.Join(instanceName, simpleServiceName, Domain);
+                }
+                DomainName fqn = FullyQualifiedName;
+                foreach (var srvRecord in Resources.OfType<SRVRecord>())
+                    srvRecord.Name = fqn;
+
+                foreach (var txtRecord in Resources.OfType<TXTRecord>())
+                    txtRecord.Name = fqn;
+            }
+        }
 
         /// <summary>
         ///   The service name and domain.
@@ -126,7 +176,19 @@ namespace Makaretu.Dns
         ///   This can be used to query the address records (A and AAAA)
         ///   of the service instance.
         /// </remarks>
-        public DomainName HostName { get; set; }
+        public DomainName HostName
+        {
+            get => hostName;
+            set
+            {
+                hostName = value;
+                foreach (var srvRecord in Resources.OfType<SRVRecord>())
+                    srvRecord.Target = hostName;
+
+                foreach (var addressRecord in Resources.OfType<AddressRecord>())
+                    addressRecord.Name = hostName;
+            }
+        }
 
         /// <summary>
         ///   The instance name, service name and domain.
