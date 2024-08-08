@@ -162,6 +162,7 @@ namespace Makaretu.Dns
         /// </summary>
         /// <param name="profile"></param>
         /// <returns>True if this service conflicts with an existing network service</returns>
+        /// <exception cref="InvalidOperationException">Thrown if a shared profile is probed</exception>
         public bool Probe(ServiceProfile profile);
 
         /// <summary>

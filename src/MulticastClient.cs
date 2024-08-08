@@ -143,25 +143,25 @@ namespace Makaretu.Dns
 
         void Listen(UdpClient receiver)
         {
-            // ReceiveAsync does not support cancellation.  So the receiver is disposed
-            // to stop it. See https://github.com/dotnet/corefx/issues/9848
-            Task.Run(async () =>
-            {
-                try
+                // ReceiveAsync does not support cancellation.  So the receiver is disposed
+                // to stop it. See https://github.com/dotnet/corefx/issues/9848
+                Task.Run(async () =>
                 {
-                    var task = receiver.ReceiveAsync();
+                    try
+                    {
+                        var task = receiver.ReceiveAsync();
 
-                    _ = task.ContinueWith(x => Listen(receiver), TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.RunContinuationsAsynchronously);
+                        _ = task.ContinueWith(x => Listen(receiver), TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.RunContinuationsAsynchronously);
 
-                    _ = task.ContinueWith(x => MessageReceived?.Invoke(this, x.Result), TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.RunContinuationsAsynchronously);
+                        _ = task.ContinueWith(x => MessageReceived?.Invoke(this, x.Result), TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.RunContinuationsAsynchronously);
 
-                    await task.ConfigureAwait(false);
-                }
-                catch
-                {
-                    return;
-                }
-            });
+                        await task.ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        return;
+                    }
+                });
         }
 
         IEnumerable<IPAddress> GetNetworkInterfaceLocalAddresses(NetworkInterface nic)

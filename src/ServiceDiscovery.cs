@@ -258,12 +258,16 @@ namespace Makaretu.Dns
         }
 
         /// <summary>
-        /// Probe the network to ensure the service is unique.
+        /// Probe the network to ensure the service is unique. Shared profiles should skip this step.
         /// </summary>
         /// <param name="profile"></param>
         /// <returns>True if this service conflicts with an existing network service</returns>
+        /// <exception cref="InvalidOperationException">Thrown if a shared profile is probed</exception>
         public bool Probe(ServiceProfile profile)
         {
+            if (profile.SharedProfile)
+                throw new InvalidOperationException("Shared profiles should not be probed");
+
             bool conflict = false;
             EventHandler<MessageEventArgs> handler = (s, e) =>
             {
