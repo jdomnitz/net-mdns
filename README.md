@@ -12,6 +12,8 @@ as both a client (sending queries) or a server (responding to queries).
 A higher level DNS Service Discovery based on [RFC 6763](https://tools.ietf.org/html/rfc6763) that automatically responds to any query for the 
 service or service instance.
 
+**Note: The DNS-SD client does not have flood protection implemented for backwards compatability.  We recommend using [Tiny DNS](https://github.com/SmartHomeOS/TinyDNS) for a fully standards compliant client if a server is not needed. If a server is needed this implementation works well.**
+
 ## Features
 
 - Targets .NET Standard 6.0, 8.0
