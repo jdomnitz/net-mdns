@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0; net8.0; net481; net462</TargetFrameworks>
+    <TargetFrameworks>net7.0; net8.0; net9.0; net481; net462</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
     <DebugType>portable</DebugType>
@@ -20,8 +20,8 @@
   <ItemGroup>
 
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" PrivateAssets="all" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.5.2" PrivateAssets="all" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.5.2" PrivateAssets="all" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" PrivateAssets="all" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" PrivateAssets="all" />
     <PackageReference Include="coverlet.msbuild" Version="6.0.2" PrivateAssets="all" />
   </ItemGroup>
 
