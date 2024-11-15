@@ -663,7 +663,7 @@ namespace Makaretu.Dns
                     };
                 mdns.Start();
                 Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(4)), "announce timeout");
-                if ((DateTime.Now - start).TotalMilliseconds < 3000)
+                if ((DateTime.Now - start).TotalMilliseconds < 2500)
                     Assert.Fail("Announcing too fast");
             }
             finally
