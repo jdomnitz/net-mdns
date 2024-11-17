@@ -301,6 +301,7 @@ namespace Makaretu.Dns
             var mdns = new MulticastService();
             var sd = new ServiceDiscovery(mdns);
 
+            MulticastService.IncludeLoopbackInterfaces = true;
             mdns.NetworkInterfaceDiscovered += (s, e) => sd.QueryUnicastAllServices();
             sd.ServiceDiscovered += (s, serviceName) =>
             {
@@ -319,6 +320,7 @@ namespace Makaretu.Dns
             {
                 sd.Dispose();
                 mdns.Stop();
+                MulticastService.IncludeLoopbackInterfaces = false;
             }
         }
 
