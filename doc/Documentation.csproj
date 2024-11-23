@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Makaretu.Dns.New" Version="3.1.1" />
+    <PackageReference Include="Makaretu.Dns.New" Version="3.1.2" />
   </ItemGroup>
 
 </Project>
