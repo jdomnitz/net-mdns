@@ -9,8 +9,8 @@
     <DebugType>full</DebugType>
     <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
     
-    <AssemblyVersion>0.37</AssemblyVersion>
-    <Version>0.37</Version>
+    <AssemblyVersion>0.38</AssemblyVersion>
+    <Version>0.38</Version>
 	<LangVersion>latest</LangVersion>
     
     <!-- Nuget specs -->
@@ -26,6 +26,16 @@
     <PackageProjectUrl>https://github.com/jdomnitz/net-mdns</PackageProjectUrl>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|net8.0'">
+    <IsTrimmable>True</IsTrimmable>
+    <IsAotCompatible>True</IsAotCompatible>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|net9.0'">
+    <IsTrimmable>True</IsTrimmable>
+    <IsAotCompatible>True</IsAotCompatible>
   </PropertyGroup>
 
   <ItemGroup>
