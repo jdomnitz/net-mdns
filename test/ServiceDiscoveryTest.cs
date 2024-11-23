@@ -96,7 +96,8 @@ namespace Makaretu.Dns
         [TestMethod]
         public void Probe_Service()
         {
-            var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
+            MulticastService.IncludeLoopbackInterfaces = true;
+            var service = new ServiceProfile("z", "_sdtest-111._udp", 1024, new[] { IPAddress.Loopback });
             var done = new ManualResetEvent(false);
 
             var mdns = new MulticastService();
@@ -116,14 +117,15 @@ namespace Makaretu.Dns
                 finally
                 {
                     mdns.Stop();
+                    MulticastService.IncludeLoopbackInterfaces = false;
                 }
             }
         }
 
         [TestMethod]
-        public void Probe_Service2()
+        public void Probe_Conflict()
         {
-            var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
+            var service = new ServiceProfile("z", "_sdtest-112._udp", 1024, new[] { IPAddress.Loopback });
 
             var sd = new ServiceDiscovery();
             sd.Advertise(service);
@@ -150,9 +152,9 @@ namespace Makaretu.Dns
         }
 
         [TestMethod]
-        public void Probe_Service3()
+        public void Probe_NoConflict()
         {
-            var service = new ServiceProfile("z", "_sdtest-11._udp", 1024, new[] { IPAddress.Loopback });
+            var service = new ServiceProfile("z", "_sdtest-113._udp", 1024, new[] { IPAddress.Loopback });
 
             var mdns = new MulticastService();
             using var sd = new ServiceDiscovery(mdns);
@@ -296,12 +298,12 @@ namespace Makaretu.Dns
         [TestMethod]
         public void Discover_AllServices_Unicast()
         {
+            MulticastService.IncludeLoopbackInterfaces = true;
             var service = new ServiceProfile("x", "_sdtest-5._udp", 1024);
             var done = new ManualResetEvent(false);
             var mdns = new MulticastService();
             var sd = new ServiceDiscovery(mdns);
 
-            MulticastService.IncludeLoopbackInterfaces = true;
             mdns.NetworkInterfaceDiscovered += (s, e) => sd.QueryUnicastAllServices();
             sd.ServiceDiscovered += (s, serviceName) =>
             {
