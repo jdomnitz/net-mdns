@@ -128,10 +128,18 @@ namespace Makaretu.Dns
 
             UseIpv4 = Socket.OSSupportsIPv4;
             if (UseIpv4)
+            {
                 unicastClientIp4 = new UdpClient(AddressFamily.InterNetwork);
+                unicastClientIp4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, 255);
+                unicastClientIp4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 255);
+            }
             UseIpv6 = Socket.OSSupportsIPv6;
             if (UseIpv6)
+            {
                 unicastClientIp6 = new UdpClient(AddressFamily.InterNetworkV6);
+                unicastClientIp6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IpTimeToLive, 255);
+                unicastClientIp6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.MulticastTimeToLive, 255);
+            }
             IgnoreDuplicateMessages = true;
         }
 
