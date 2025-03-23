@@ -46,6 +46,8 @@ namespace Makaretu.Dns
             {
                 receiver4 = new UdpClient(AddressFamily.InterNetwork);
                 receiver4.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                receiver4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, 255);
+                receiver4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 255);
                 receiver4.Client.Bind(new IPEndPoint(IPAddress.Any, MulticastPort));
                 receivers.Add(receiver4);
             }
@@ -55,6 +57,8 @@ namespace Makaretu.Dns
             {
                 receiver6 = new UdpClient(AddressFamily.InterNetworkV6);
                 receiver6.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                receiver6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IpTimeToLive, 255);
+                receiver6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.MulticastTimeToLive, 255);
                 receiver6.Client.Bind(new IPEndPoint(IPAddress.IPv6Any, MulticastPort));
                 receivers.Add(receiver6);
             }
@@ -81,6 +85,8 @@ namespace Makaretu.Dns
                             MulticastOption mcastOption4 = new MulticastOption(MulticastAddressIp4, address);
                             receiver4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, mcastOption4);
                             sender.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                            sender.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, 255);
+                            sender.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 255);
                             sender.Client.Bind(localEndpoint);
                             sender.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, mcastOption4);
                             break;
@@ -88,6 +94,8 @@ namespace Makaretu.Dns
                             IPv6MulticastOption mcastOption6 = new IPv6MulticastOption(MulticastAddressIp6, address.ScopeId);
                             receiver6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.AddMembership, mcastOption6);
                             sender.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                            sender.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IpTimeToLive, 255);
+                            sender.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.MulticastTimeToLive, 255);
                             sender.Client.Bind(localEndpoint);
                             sender.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.AddMembership, mcastOption6);
                             break;
