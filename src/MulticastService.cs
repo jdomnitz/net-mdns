@@ -282,9 +282,13 @@ namespace Makaretu.Dns
             AnswerReceived = null;
             NetworkInterfaceDiscovered = null;
 #if NETSTANDARD1_1_OR_GREATER || NETCOREAPP1_0_OR_GREATER || NET471_OR_GREATER
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            try
             {
                 NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                // Eat the exception
             }
 #else
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
@@ -357,10 +361,14 @@ namespace Makaretu.Dns
                 //
                 // Do magic only on Windows.
 #if NETSTANDARD1_1_OR_GREATER || NETCOREAPP1_0_OR_GREATER || NET471_OR_GREATER
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                try
                 {
                     NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
                     NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
+                }
+                catch (PlatformNotSupportedException)
+                {
+                    // Eat the exception
                 }
 #else
                 if (Environment.OSVersion.Platform == PlatformID.Win32NT)
