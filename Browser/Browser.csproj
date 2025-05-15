@@ -9,8 +9,4 @@
     <ProjectReference Include="..\src\Mdns.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
 </Project>

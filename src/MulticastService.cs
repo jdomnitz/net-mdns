@@ -25,14 +25,13 @@ namespace Makaretu.Dns
     /// </remarks>
     public class MulticastService : IMulticastService
     {
-        // IP header (20 bytes for IPv4; 40 bytes for IPv6) and the UDP header(8 bytes).
-        private const int packetOverhead = 48;
-        private const int maxDatagramSize = Message.MaxLength;
+        private const int PacketOverhead = 48; // IP header (20 bytes for IPv4; 40 bytes for IPv6) and the UDP header(8 bytes).
+        private const int MaxDatagramSize = Message.MaxLength;
 
-        private static readonly TimeSpan maxLegacyUnicastTTL = TimeSpan.FromSeconds(10);
-        private static readonly ILog log = LogManager.GetLogger(typeof(MulticastService));
+        private static readonly TimeSpan MaxLegacyUnicastTTL = TimeSpan.FromSeconds(10);
+        private static readonly ILog Logger = LogManager.GetLogger<MulticastService>();
 
-        private List<NetworkInterface> knownNics = new List<NetworkInterface>();
+        private List<NetworkInterface> knownNics = [];
         private int maxPacketSize;
 
         /// <summary>
@@ -40,40 +39,47 @@ namespace Makaretu.Dns
         /// as well as the usual multicast responses.
         /// </summary>
         public const int UNICAST_RESPONSE_BIT = 0x8000;
+
         /// <summary>
         /// If the record is one that has been verified unique, the host sets the most significant bit of the rrclass field of the resource record.
         /// This bit, the cache-flush bit, tells neighboring hosts that this is not a shared record type.
         /// </summary>
         public const int CACHE_FLUSH_BIT = 0x8000;
+
         /// <summary>
         ///   Recently sent messages.
         /// </summary>
-        private readonly RecentMessages sentMessages = new RecentMessages();
+        private readonly RecentMessages _sentMessages = new();
 
         /// <summary>
         ///   Recently received messages.
         /// </summary>
-        private readonly RecentMessages receivedMessages = new RecentMessages();
+        private readonly RecentMessages _receivedMessages = new();
 
         /// <summary>
         ///   The multicast client.
         /// </summary>
-        private MulticastClient client;
+        private MulticastClient _multicastClient;
 
         /// <summary>
         ///   Use to send unicast IPv4 answers.
         /// </summary>
-        private readonly UdpClient unicastClientIp4;
+        private readonly UdpClient _unicastClientIPv4;
 
         /// <summary>
         ///   Use to send unicast IPv6 answers.
         /// </summary>
-        private readonly UdpClient unicastClientIp6;
+        private readonly UdpClient _unicastClientIPv6;
 
         /// <summary>
         ///   Function used for listening filtered network interfaces.
         /// </summary>
-        private readonly Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> networkInterfacesFilter;
+        private readonly Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> _networkInterfacesFilter;
+
+        /// <summary>
+        /// A function used to select the corresponding IPv6 multicast address scope for each IPv6 address.
+        /// </summary>
+        private readonly Func<IPAddress, IPv6MulticastAddressScope> _ipv6MulticastScopeSelector;
 
         /// <summary>
         ///   Raised when any local MDNS service sends a query.
@@ -115,33 +121,6 @@ namespace Makaretu.Dns
         ///   Contains the network interface(s).
         /// </value>
         public event EventHandler<NetworkInterfaceEventArgs> NetworkInterfaceDiscovered;
-
-        /// <summary>
-        ///   Create a new instance of the <see cref="MulticastService"/> class.
-        /// </summary>
-        /// <param name="filter">
-        ///   Multicast listener will be bound to result of filtering function.
-        /// </param>
-        public MulticastService(Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> filter = null)
-        {
-            networkInterfacesFilter = filter;
-
-            UseIpv4 = Socket.OSSupportsIPv4;
-            if (UseIpv4)
-            {
-                unicastClientIp4 = new UdpClient(AddressFamily.InterNetwork);
-                unicastClientIp4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, 255);
-                unicastClientIp4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 255);
-            }
-            UseIpv6 = Socket.OSSupportsIPv6;
-            if (UseIpv6)
-            {
-                unicastClientIp6 = new UdpClient(AddressFamily.InterNetworkV6);
-                unicastClientIp6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IpTimeToLive, 255);
-                unicastClientIp6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.MulticastTimeToLive, 255);
-            }
-            IgnoreDuplicateMessages = true;
-        }
 
         /// <summary>
         ///   Send and receive on IPv4.
@@ -193,12 +172,40 @@ namespace Makaretu.Dns
         /// Per https://tools.ietf.org/html/rfc6762 section 10: All records containing
         /// Host in the record OR Rdata should have a default TTL of 2 mins
         /// </summary>
-        public static TimeSpan HostRecordTTL = TimeSpan.FromSeconds(120);
+        public static TimeSpan HostRecordTTL { get; set; } = TimeSpan.FromSeconds(120);
+
         /// <summary>
         /// Per https://tools.ietf.org/html/rfc6762 section 10:
         /// All records NOT containing Host in the record OR Rdata should have a default TTL of 75 mins
         /// </summary>
-        public static TimeSpan NonHostTTL = TimeSpan.FromMinutes(75);
+        public static TimeSpan NonHostTTL { get; set; } = TimeSpan.FromMinutes(75);
+
+        /// <summary>
+        /// Create a new instance of the <see cref="MulticastService"/> class.
+        /// </summary>
+        /// <param name="filter">Multicast listener will be bound to result of filtering function.</param>
+        /// <param name="ipv6MulticastScopeSelector">A function used to select the corresponding IPv6 multicast address scope for each IPv6 address.</param>
+        public MulticastService(Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> filter = null, Func<IPAddress, IPv6MulticastAddressScope> ipv6MulticastScopeSelector = null)
+        {
+            _networkInterfacesFilter = filter;
+            _ipv6MulticastScopeSelector = ipv6MulticastScopeSelector ?? DefaultIPv6MulticastScopeSelector;
+
+            UseIpv4 = Socket.OSSupportsIPv4;
+            if (UseIpv4)
+            {
+                _unicastClientIPv4 = new UdpClient(AddressFamily.InterNetwork);
+                _unicastClientIPv4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, 255);
+                _unicastClientIPv4.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 255);
+            }
+            UseIpv6 = Socket.OSSupportsIPv6;
+            if (UseIpv6)
+            {
+                _unicastClientIPv6 = new UdpClient(AddressFamily.InterNetworkV6);
+                _unicastClientIPv6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IpTimeToLive, 255);
+                _unicastClientIPv6.Client.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.MulticastTimeToLive, 255);
+            }
+            IgnoreDuplicateMessages = true;
+        }
 
         /// <summary>
         ///   Get the network interfaces that are useable.
@@ -270,7 +277,7 @@ namespace Makaretu.Dns
         /// </summary>
         public void Start()
         {
-            maxPacketSize = maxDatagramSize - packetOverhead;
+            maxPacketSize = MaxDatagramSize - PacketOverhead;
 
             knownNics.Clear();
 
@@ -301,15 +308,26 @@ namespace Makaretu.Dns
             }
 #endif
             // Stop current UDP listener
-            client?.Dispose();
-            client = null;
+            _multicastClient?.Dispose();
+            _multicastClient = null;
+        }
+
+        private static IPv6MulticastAddressScope DefaultIPv6MulticastScopeSelector(IPAddress address)
+        {
+            return address switch
+            {
+                _ when Equals(address, IPAddress.IPv6Loopback) => IPv6MulticastAddressScope.InterfaceLocal,
+                { IsIPv6LinkLocal: true } => IPv6MulticastAddressScope.LinkLocal,
+                { IsIPv6SiteLocal: true } => IPv6MulticastAddressScope.SiteLocal,
+                _ => IPv6MulticastAddressScope.Global
+            };
         }
 
         private void OnNetworkAddressChanged(object sender, EventArgs e) => FindNetworkInterfaces();
 
         private void FindNetworkInterfaces()
         {
-            log.Debug("Finding network interfaces");
+            Logger.Debug("Finding network interfaces");
 
             try
             {
@@ -322,9 +340,9 @@ namespace Makaretu.Dns
                 {
                     oldNics.Add(nic);
 
-                    if (log.IsDebugEnabled)
+                    if (Logger.IsDebugEnabled)
                     {
-                        log.Debug($"Removed nic '{nic.Name}'.");
+                        Logger.Debug($"Removed nic '{nic.Name}'.");
                     }
                 }
 
@@ -332,9 +350,9 @@ namespace Makaretu.Dns
                 {
                     newNics.Add(nic);
 
-                    if (log.IsDebugEnabled)
+                    if (Logger.IsDebugEnabled)
                     {
-                        log.Debug($"Found nic '{nic.Name}'.");
+                        Logger.Debug($"Found nic '{nic.Name}'.");
                     }
                 }
 
@@ -343,9 +361,9 @@ namespace Makaretu.Dns
                 // Only create client if something has change.
                 if (newNics.Count > 0 || oldNics.Count > 0)
                 {
-                    client?.Dispose();
-                    client = new MulticastClient(UseIpv4, UseIpv6, networkInterfacesFilter?.Invoke(knownNics) ?? knownNics);
-                    client.MessageReceived += OnDnsMessage;
+                    _multicastClient?.Dispose();
+                    _multicastClient = new MulticastClient(UseIpv4, UseIpv6, _networkInterfacesFilter?.Invoke(knownNics) ?? knownNics, _ipv6MulticastScopeSelector);
+                    _multicastClient.MessageReceived += OnDnsMessage;
                 }
 
                 // Tell others.
@@ -380,7 +398,7 @@ namespace Makaretu.Dns
             }
             catch (Exception e)
             {
-                log.Error("FindNics failed", e);
+                Logger.Error("FindNics failed", e);
             }
         }
 
@@ -392,7 +410,7 @@ namespace Makaretu.Dns
             void checkResponse(object s, MessageEventArgs e)
             {
                 var response = e.Message;
-                if (request.Questions.All(q => response.Answers.Any(a => a.Name == q.Name)))
+                if (request.Questions.TrueForAll(q => response.Answers.Exists(a => a.Name == q.Name)))
                 {
                     AnswerReceived -= checkResponse;
                     tsc.SetResult(response);
@@ -635,7 +653,7 @@ namespace Makaretu.Dns
                 throw new ArgumentOutOfRangeException($"Exceeds max packet size of {maxPacketSize}.");
             }
 
-            if (checkDuplicate && !sentMessages.TryAdd(packet))
+            if (checkDuplicate && !_sentMessages.TryAdd(packet))
             {
                 return;
             }
@@ -643,13 +661,14 @@ namespace Makaretu.Dns
             if (remoteEndPoint == null)
             {
                 // Standard multicast reponse
-                client?.SendAsync(packet).GetAwaiter().GetResult();
+                _multicastClient?.SendAsync(packet).GetAwaiter().GetResult();
             }
             // Unicast response
             else
             {
                 var unicastClient = (remoteEndPoint.Address.AddressFamily == AddressFamily.InterNetwork)
-                    ? unicastClientIp4 : unicastClientIp6;
+                    ? _unicastClientIPv4
+                    : _unicastClientIPv6;
                 unicastClient?.SendAsync(packet, packet.Length, remoteEndPoint).GetAwaiter().GetResult();
             }
         }
@@ -678,13 +697,14 @@ namespace Makaretu.Dns
                     if (record.TTL != TimeSpan.Zero)
                         record.TTL = HostRecordTTL;
                     break;
+
                 default:
                     if (record.TTL != TimeSpan.Zero)
                         record.TTL = NonHostTTL;
                     break;
             }
-            if (legacy && record.TTL > maxLegacyUnicastTTL)
-                record.TTL = maxLegacyUnicastTTL;
+            if (legacy && record.TTL > MaxLegacyUnicastTTL)
+                record.TTL = MaxLegacyUnicastTTL;
         }
 
         /// <summary>
@@ -711,7 +731,7 @@ namespace Makaretu.Dns
         public void OnDnsMessage(object sender, UdpReceiveResult result)
         {
             // If recently received, then ignore.
-            if (IgnoreDuplicateMessages && !receivedMessages.TryAdd(result.Buffer))
+            if (IgnoreDuplicateMessages && !_receivedMessages.TryAdd(result.Buffer))
             {
                 return;
             }
@@ -723,7 +743,7 @@ namespace Makaretu.Dns
             }
             catch (Exception e)
             {
-                log.Warn("Received malformed message", e);
+                Logger.Warn("Received malformed message", e);
                 MalformedMessage?.Invoke(this, result.Buffer);
                 return; // eat the exception
             }
@@ -748,7 +768,7 @@ namespace Makaretu.Dns
             }
             catch (Exception e)
             {
-                log.Error("Receive handler failed", e);
+                Logger.Error("Receive handler failed", e);
                 // eat the exception
             }
         }
@@ -761,8 +781,8 @@ namespace Makaretu.Dns
             if (disposing)
             {
                 //Dispose of the clients
-                unicastClientIp4?.Dispose();
-                unicastClientIp6?.Dispose();
+                _unicastClientIPv4?.Dispose();
+                _unicastClientIPv6?.Dispose();
                 Stop();
             }
         }
